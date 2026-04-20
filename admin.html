@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSK 後台管理系統</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: #1e293b; }
+    .sidebar { position: fixed; left: 0; top: 0; width: 240px; height: 100vh; background: linear-gradient(160deg, #0a3547, #0e7fa8); padding: 2rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 10; }
+    .logo { color: #fff; font-size: 1.5rem; font-weight: 700; letter-spacing: 0.2em; margin-bottom: 0.2rem; }
+    .logo-sub { color: rgba(255,255,255,0.5); font-size: 0.6rem; letter-spacing: 0.4em; margin-bottom: 2rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 8px; cursor: pointer; border: none; background: none; width: 100%; font-size: 0.9rem; transition: all 0.2s; }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; }
+    .main { margin-left: 240px; padding: 2rem 2.5rem; min-height: 100vh; }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-size: 1.75rem; color: #0a3547; font-weight: 700; }
+    .page-header p { color: #64748b; margin-top: 0.25rem; font-size: 0.9rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 8px rgba(0,0,0,0.06); border-top: 3px solid transparent; }
+    .stat-card.blue { border-color: #0e7fa8; } .stat-card.yellow { border-color: #f59e0b; } .stat-card.green { border-color: #10b981; } .stat-card.red { border-color: #ef4444; } .stat-card.purple { border-color: #8b5cf6; }
+    .stat-num { font-size: 2rem; font-weight: 700; color: #0a3547; line-height: 1; }
+    .stat-label { font-size: 0.75rem; color: #94a3b8; margin-top: 0.4rem; }
+    .filters { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
+    .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { background: #0e7fa8; border-color: #0e7fa8; color: #fff; }
+    .search-input { padding: 0.5rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.85rem; outline: none; min-width: 220px; margin-left: auto; }
+    .search-input:focus { border-color: #0e7fa8; }
+    .table-wrap { background: #fff; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.06); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f8fafc; padding: 0.9rem 1.25rem; text-align: left; font-size: 0.75rem; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafcff; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
+    .badge.pending { background: #fef3c7; color: #92400e; } .badge.approved { background: #d1fae5; color: #065f46; } .badge.rejected { background: #fee2e2; color: #991b1b; }
+    .btn { padding: 0.35rem 0.75rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all 0.2s; }
+    .btn-approve { background: #d1fae5; color: #059669; } .btn-approve:hover { background: #059669; color: #fff; }
+    .btn-delete { background: #f1f5f9; color: #94a3b8; } .btn-delete:hover { background: #ef4444; color: #fff; }
+    .btn-primary { background: #0e7fa8; color: #fff; padding: 0.5rem 1.25rem; font-size: 0.85rem; }
+    .btn-primary:hover { background: #0a3547; }
+    .tag-pill { background: #eff6ff; color: #1d4ed8; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 2rem; width: 500px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal h3 { font-size: 1.2rem; margin-bottom: 1rem; color: #0a3547; }
+    .modal label { font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 0.25rem; margin-top: 1rem; }
+    .modal input, .modal textarea, .modal select { width: 100%; padding: 0.6rem 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.875rem; outline: none; }
+    .modal input:focus, .modal textarea:focus, .modal select:focus { border-color: #0e7fa8; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .video-player { width: 100%; border-radius: 8px; max-height: 280px; background: #000; margin-bottom: 1rem; }
+    .empty { text-align: center; padding: 4rem; color: #94a3b8; }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: #0a3547; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.875rem; box-shadow: 0 4px 20px rgba(0,0,0,0.2); transform: translateY(100px); transition: transform 0.3s; z-index: 200; }
+    .toast.show { transform: translateY(0); }
+    .uploader-name { font-weight: 600; } .uploader-email { color: #94a3b8; font-size: 0.75rem; }
+    .reward-tag { color: #059669; font-weight: 700; font-size: 0.85rem; }
+    .time-ago { color: #94a3b8; font-size: 0.78rem; }
+    .file-size { color: #94a3b8; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">PSK</div>
+  <div class="logo-sub">ADMIN PANEL</div>
+  <button class="nav-item active" onclick="showPage('submissions', this)">📹 影片投稿管理</button>
+  <button class="nav-item" onclick="showPage('stats', this)">📊 統計報表</button>
+  <hr style="border-color:rgba(255,255,255,0.1);margin:0.5rem 0;">
+  <button class="nav-item" style="color:rgba(255,255,255,0.5);font-size:0.78rem;" onclick="seedData()">🧪 加入測試資料</button>
+  <div style="margin-top:auto;color:rgba(255,255,255,0.35);font-size:0.7rem;padding:1rem 0.5rem;">PSK Ocean Skincare<br>後台管理 v1.0</div>
+</aside>
+
+<main class="main">
+  <div id="page-submissions">
+    <div class="page-header">
+      <h1>影片投稿管理</h1>
+      <p>審核用戶上傳的挑戰影片，發放購物金獎勵</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card blue"><div class="stat-num" id="s-total">—</div><div class="stat-label">總投稿數</div></div>
+      <div class="stat-card yellow"><div class="stat-num" id="s-pending">—</div><div class="stat-label">待審核</div></div>
+      <div class="stat-card green"><div class="stat-num" id="s-approved">—</div><div class="stat-label">已核准</div></div>
+      <div class="stat-card red"><div class="stat-num" id="s-rejected">—</div><div class="stat-label">已拒絕</div></div>
+      <div class="stat-card purple"><div class="stat-num" id="s-reward">—</div><div class="stat-label">已發放購物金</div></div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
+      <button class="filter-btn" onclick="setFilter('pending', this)">⏳ 待審核</button>
+      <button class="filter-btn" onclick="setFilter('approved', this)">✅ 已核准</button>
+      <button class="filter-btn" onclick="setFilter('rejected', this)">❌ 已拒絕</button>
+      <input class="search-input" type="text" placeholder="🔍 搜尋名稱、信箱、挑戰標籤…" id="search-input" oninput="renderTable()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>投稿人</th><th>挑戰標籤</th><th>檔案大小</th><th>狀態</th><th>購物金</th><th>上傳時間</th><th>操作</th></tr></thead>
+        <tbody id="table-body"><tr><td colspan="7"><div class="empty"><div class="empty-icon">🌊</div>載入中…</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="page-stats" style="display:none;">
+    <div class="page-header"><h1>統計報表</h1><p>各挑戰活動投稿概況</p></div>
+    <div id="stats-detail" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;"></div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>📋 審核投稿</h3>
+    <div id="modal-video-wrap"></div>
+    <label>投稿人</label><input type="text" id="m-name" readonly style="background:#f8fafc;">
+    <label>信箱</label><input type="text" id="m-email" readonly style="background:#f8fafc;">
+    <label>審核結果</label>
+    <select id="m-status">
+      <option value="pending">⏳ 待審核</option>
+      <option value="approved">✅ 核准並發放購物金</option>
+      <option value="rejected">❌ 拒絕</option>
+    </select>
+    <label>購物金金額（元）</label><input type="number" id="m-reward" value="500" min="0">
+    <label>審核備註</label><textarea id="m-note" rows="2" placeholder="備註說明（可選）"></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-delete" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitReview()">確認審核</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:3001/api';
+let allSubmissions = [], currentFilter = 'all', currentId = null;
+
+async function fetchData() {
+  try {
+    const [subs, stats] = await Promise.all([
+      fetch(`${API}/admin/submissions`).then(r => r.json()),
+      fetch(`${API}/admin/stats`).then(r => r.json()),
+    ]);
+    allSubmissions = subs;
+    document.getElementById('s-total').textContent = stats.total;
+    document.getElementById('s-pending').textContent = stats.pending;
+    document.getElementById('s-approved').textContent = stats.approved;
+    document.getElementById('s-rejected').textContent = stats.rejected;
+    document.getElementById('s-reward').textContent = `$${stats.totalReward.toLocaleString()}`;
+    renderTable(); renderStatsDetail(subs);
+  } catch(e) {
+    document.getElementById('table-body').innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⚠️</div>無法連線到伺服器<br><small>請確認已執行 node server.js</small></div></td></tr>`;
+  }
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active'); renderTable();
+}
+
+function renderTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  let rows = allSubmissions.filter(s => {
+    if (currentFilter !== 'all' && s.status !== currentFilter) return false;
+    if (q && ![s.uploaderName, s.email, s.challengeTag, s.originalName].some(v => v.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const tbody = document.getElementById('table-body');
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔍</div>找不到符合的投稿</div></td></tr>`; return; }
+  tbody.innerHTML = rows.map(s => `
+    <tr>
+      <td><div class="uploader-name">${esc(s.uploaderName)}</div><div class="uploader-email">${esc(s.email)}</div><div style="color:#94a3b8;font-size:0.72rem;margin-top:2px;">📄 ${esc(s.originalName)}</div></td>
+      <td><span class="tag-pill">${esc(s.challengeTag)}</span></td>
+      <td><span class="file-size">${formatSize(s.size)}</span></td>
+      <td><span class="badge ${s.status}">${statusLabel(s.status)}</span></td>
+      <td>${s.reward > 0 ? `<span class="reward-tag">$${s.reward}</span>` : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td><span class="time-ago">${timeAgo(s.uploadedAt)}</span></td>
+      <td style="display:flex;gap:0.4rem;">
+        <button class="btn btn-approve" onclick="openModal('${s.id}')">審核</button>
+        <button class="btn btn-delete" onclick="deleteRow('${s.id}')">刪除</button>
+      </td>
+    </tr>`).join('');
+}
+
+function openModal(id) {
+  const s = allSubmissions.find(x => x.id === id); if (!s) return;
+  currentId = id;
+  document.getElementById('m-name').value = s.uploaderName;
+  document.getElementById('m-email').value = s.email;
+  document.getElementById('m-status').value = s.status;
+  document.getElementById('m-reward').value = s.reward || 500;
+  document.getElementById('m-note').value = s.note || '';
+  const isDemo = s.filename === 'demo_video.mp4';
+  document.getElementById('modal-video-wrap').innerHTML = isDemo
+    ? `<div style="background:#f1f5f9;border-radius:8px;padding:2rem;text-align:center;color:#94a3b8;margin-bottom:1rem;">🎬 測試資料（無實際影片）</div>`
+    : `<video class="video-player" controls src="http://localhost:3001/uploads/${s.filename}"></video>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); currentId = null; }
+
+async function submitReview() {
+  if (!currentId) return;
+  await fetch(`${API}/admin/submissions/${currentId}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: document.getElementById('m-status').value, reward: Number(document.getElementById('m-reward').value), note: document.getElementById('m-note').value }),
+  });
+  closeModal(); showToast(`✅ 審核完成`); fetchData();
+}
+
+async function deleteRow(id) {
+  if (!confirm('確定要刪除此投稿及其影片？')) return;
+  await fetch(`${API}/admin/submissions/${id}`, { method: 'DELETE' });
+  showToast('🗑️ 已刪除'); fetchData();
+}
+
+async function seedData() {
+  await fetch(`${API}/admin/seed`, { method: 'POST' });
+  showToast('🧪 測試資料已加入！'); fetchData();
+}
+
+function renderStatsDetail(subs) {
+  const tags = {};
+  subs.forEach(s => {
+    if (!tags[s.challengeTag]) tags[s.challengeTag] = { total:0, approved:0, pending:0, reward:0 };
+    tags[s.challengeTag].total++;
+    if (s.status === 'approved') { tags[s.challengeTag].approved++; tags[s.challengeTag].reward += s.reward; }
+    if (s.status === 'pending') tags[s.challengeTag].pending++;
+  });
+  document.getElementById('stats-detail').innerHTML = Object.entries(tags).map(([tag, d]) => `
+    <div style="background:#fff;border-radius:12px;padding:2rem;box-shadow:0 1px 8px rgba(0,0,0,0.06);">
+      <div style="font-size:1rem;font-weight:700;color:#0a3547;margin-bottom:1rem;">${esc(tag)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+        <div><div style="font-size:1.5rem;font-weight:700;color:#0e7fa8;">${d.total}</div><div style="font-size:0.72rem;color:#94a3b8;">總投稿</div></div>
+        <div><div style="font-size:1.5rem;font-weight:700;color:#f59e0b;">${d.pending}</div><div style="font-size:0.72rem;color:#94a3b8;">待審核</div></div>
+        <div><div style="font-size:1.5rem;font-weight:700;color:#10b981;">${d.approved}</div><div style="font-size:0.72rem;color:#94a3b8;">已核准</div></div>
+        <div><div style="font-size:1.5rem;font-weight:700;color:#8b5cf6;">$${d.reward}</div><div style="font-size:0.72rem;color:#94a3b8;">購物金</div></div>
+      </div>
+    </div>`).join('') || '<div style="color:#94a3b8;padding:2rem;">尚無資料</div>';
+}
+
+function showPage(page, el) {
+  document.getElementById('page-submissions').style.display = page === 'submissions' ? 'block' : 'none';
+  document.getElementById('page-stats').style.display = page === 'stats' ? 'block' : 'none';
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function statusLabel(s) { return { pending:'⏳ 待審核', approved:'✅ 核准', rejected:'❌ 拒絕' }[s] || s; }
+function formatSize(b) { return b > 1e6 ? (b/1e6).toFixed(1)+' MB' : (b/1e3).toFixed(0)+' KB'; }
+function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function timeAgo(iso) {
+  const diff = (Date.now() - new Date(iso)) / 1000;
+  if (diff < 60) return '剛才'; if (diff < 3600) return Math.floor(diff/60)+' 分鐘前';
+  if (diff < 86400) return Math.floor(diff/3600)+' 小時前'; return Math.floor(diff/86400)+' 天前';
+}
+
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+fetchData();
+setInterval(fetchData, 30000);
+</script>
+</body>
+</html>
