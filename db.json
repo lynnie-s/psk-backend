@@ -1,0 +1,32 @@
+{
+  "submissions": [
+    {
+      "id": "0579ecba-50c8-4f47-a3c9-bb50559295e0",
+      "filename": "61c888cc-fee9-484f-ac98-0a245e9b74db.MOV",
+      "originalName": "IMG_7418.MOV",
+      "size": 1544179,
+      "challengeTag": "#PSK五分鐘戰神",
+      "uploaderName": "lynn",
+      "email": "lynn@gmail.com",
+      "status": "approved",
+      "reward": 500,
+      "note": "",
+      "uploadedAt": "2026-04-20T02:09:18.609Z",
+      "reviewedAt": "2026-04-20T02:10:42.834Z"
+    },
+    {
+      "id": "3f2c48d5-bfd0-40f8-a716-2ce368554be4",
+      "filename": "e77dc80e-2c8d-4055-8e35-549a3c9e0ade.MOV",
+      "originalName": "IMG_7418.MOV",
+      "size": 1544179,
+      "challengeTag": "#PSK五分鐘戰神",
+      "uploaderName": "l",
+      "email": "l",
+      "status": "pending",
+      "reward": 0,
+      "note": "",
+      "uploadedAt": "2026-04-20T11:00:33.795Z",
+      "reviewedAt": null
+    }
+  ]
+}
