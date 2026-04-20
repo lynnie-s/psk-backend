@@ -127,7 +127,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'http://localhost:3001/api';
+const API = 'https://psk-backend-production.up.railway.app/api';
 let allSubmissions = [], currentFilter = 'all', currentId = null;
 
 async function fetchData() {
@@ -189,7 +189,7 @@ function openModal(id) {
   const isDemo = s.filename === 'demo_video.mp4';
   document.getElementById('modal-video-wrap').innerHTML = isDemo
     ? `<div style="background:#f1f5f9;border-radius:8px;padding:2rem;text-align:center;color:#94a3b8;margin-bottom:1rem;">🎬 測試資料（無實際影片）</div>`
-    : `<video class="video-player" controls src="http://localhost:3001/uploads/${s.filename}"></video>`;
+   : `<video class="video-player" controls src="https://psk-backend-production.up.railway.app/uploads/${s.filename}"></video>`;
   document.getElementById('modal').classList.add('open');
 }
 
